@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
-    "start": "pm2 start src/server.js -i max -f",
+    "start": "pm2 start src/server.js -i max -f name tobaline-backend",
+    "restart": "pm2 restart tobaline-backend",
+    "logs": "pm2 logs tobaline-backend",
     "test": "jest",
     "lint": "eslint . --fix",
     "format": "prettier --write ."
