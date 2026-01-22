@@ -6,27 +6,26 @@ const {
   sendOTP,
   verifyOTP,
   changePassword,
-  myProfile,
+  MyProfile,
   updateprofile,
+  loginwithOtp,
+  verifyOTPForLogin,
 } = require("@controllers/authController");
-const auth = require("@middlewares/authMiddleware");
-// const { upload } = require("@services/fileUpload");
+
+const isAuthenticated = require("../middlewares/authMiddleware");
 
 router.post("/login", login);
 router.post("/register", register);
+router.post("/loginwithOtp", loginwithOtp);
+router.post("/verifyOTPForLogin", verifyOTPForLogin);
 router.post("/sendOTP", sendOTP);
 router.post("/verifyOTP", verifyOTP);
 router.post("/changePassword", changePassword);
-router.get(
-  "/profile",
-  auth("admin", "user", "guard", "org", "tech"),
-  myProfile,
+router.get("/profile", isAuthenticated(["ADMIN", "USER"]), MyProfile);
+router.post(
+  "/updateprofile",
+  isAuthenticated(["ADMIN", "USER"]),
+  updateprofile,
 );
-// router.post(
-//   "/updateprofile",
-//   auth("admin", "user", "guard", "org", "tech"),
-//   upload.single("image"),
-//   updateprofile,
-// );
 
 module.exports = router;

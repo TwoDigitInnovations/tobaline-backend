@@ -4,6 +4,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const response = require("../responses");
 const userHelper = require("../helper/user");
+const { logmate } = require("../middlewares/logmate");
+const jwtService = require("../services/jwtService");
+const passport = require("passport");
 
 module.exports = {
   register: async (req, res) => {
@@ -35,9 +38,6 @@ module.exports = {
 
       if (phone) {
         newUser.phone = phone;
-      }
-      if (organization) {
-        newUser.organization = organization;
       }
 
       await newUser.save();
@@ -96,6 +96,80 @@ module.exports = {
     }
   },
 
+  loginwithOtp: (req, res) => {
+    passport.authenticate(
+      "local",
+      { session: false },
+      async (err, user, info) => {
+        if (err) {
+          return response.error(res, err);
+        }
+        console.log(err, user, info);
+
+        if (!user) {
+          return response.unAuthorize(res, info);
+        }
+
+        await logmate(req, res, user);
+        if (user.role === "USER") {
+          return response.conflict(res, { message: "Invalid account" });
+        }
+        let ran_otp = Math.floor(1000 + Math.random() * 9000);
+
+        const email = user.email;
+        console.log(email, ran_otp);
+
+        let ver = new Verification({
+          user: user._id,
+          otp: ran_otp,
+          expiration_at: userHelper.getDatewithAddedMinutes(5),
+        });
+        await ver.save();
+
+        let token = await userHelper.encode(ver._id);
+        return response.ok(res, { message: "OTP sent.", token });
+      },
+    )(req, res);
+  },
+
+  verifyOTPForLogin: async (req, res) => {
+    try {
+      const otp = req.body.otp;
+      const token = req.body.token;
+      console.log("otp, token", otp, token);
+
+      if (!(otp && token)) {
+        return response.badReq(res, { message: "otp and token required." });
+      }
+
+      let verId = await userHelper.decode(token);
+
+      let ver = await Verification.findById(verId);
+      let user = await userHelper.find({ _id: ver.user });
+      await logmate(req, res, user);
+      console.log("ver, user", ver, user);
+      if (
+        otp == ver.otp &&
+        !ver.verified &&
+        new Date().getTime() < new Date(ver.expiration_at).getTime()
+      ) {
+        ver.verified = true;
+        await ver.save();
+        let token = await new jwtService().createJwtToken({
+          id: user._id,
+          type: user.type,
+          tokenVersion: new Date(),
+        });
+        const userdata = await User.findById(user._id, "-password").lean();
+        return response.ok(res, { ...userdata, token });
+      } else {
+        return response.notFound(res, { message: "Invalid OTP" });
+      }
+    } catch (error) {
+      return response.error(res, error);
+    }
+  },
+
   sendOTP: async (req, res) => {
     try {
       const email = req.body.email;
@@ -113,7 +187,7 @@ module.exports = {
         expiration_at: userHelper.getDatewithAddedMinutes(5),
       });
       await ver.save();
-      // }
+
       let token = await userHelper.encode(ver._id);
 
       return response.ok(res, { message: "OTP sent.", token });
@@ -176,12 +250,29 @@ module.exports = {
     }
   },
 
-  myProfile: async (req, res) => {
+  MyProfile: async (req, res) => {
     try {
-      const user = await User.findById(req.user.id, "-password");
-      return response.ok(res, user);
+      if (!req.user || !req.user.id) {
+        return response.unAuthorize(res, {
+          message: "Invalid token or user not found",
+        });
+      }
+
+      const user = await User.findById(req.user.id).select("-password");
+
+      if (!user) {
+        return response.notFound(res, {
+          message: "User not found",
+        });
+      }
+
+      return response.ok(res, {
+        message: "Profile fetched successfully",
+        data: user,
+      });
     } catch (error) {
-      return response.error(res, error);
+      console.error("My profile error:", error);
+      return response.error(res, error.message || "Something went wrong");
     }
   },
 

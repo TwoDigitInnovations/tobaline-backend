@@ -1,0 +1,8 @@
+{
+  "jwt": {
+    "algorithm": "HS256",
+    "issuer": "tobaline-backend",
+    "audience": "tobaline-users",
+    "expiresIn": "7d"
+  }
+}
