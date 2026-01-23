@@ -1,5 +1,5 @@
-const Contact = require('@models/contactUs');
-const response = require('../responses');
+const Contact = require("@models/contactUs");
+const response = require("../responses");
 
 module.exports = {
   contactUs: async (req, res) => {
@@ -7,7 +7,7 @@ module.exports = {
       const payload = req.body;
       const newContact = new Contact(payload);
       await newContact.save();
-      return response.ok(res, { message: 'Contact submitted successfully' });
+      return response.ok(res, { message: "Contact submitted successfully" });
     } catch (error) {
       return response.error(res, error);
     }
@@ -20,23 +20,25 @@ module.exports = {
       if (req.body.curDate) {
         const startDate = new Date(req.body.curDate);
         const endDate = new Date(
-          new Date(req.body.curDate).setDate(startDate.getDate() + 1)
+          new Date(req.body.curDate).setDate(startDate.getDate() + 1),
         );
         cond.createdAt = { $gte: startDate, $lte: endDate };
       }
 
       if (req.body.name) {
         const name = req.body.name.substring(0, 3);
-        cond.name = { $regex: '^' + name, $options: 'i' };
+        cond.name = { $regex: "^" + name, $options: "i" };
       }
 
       if (req.body.Email) {
-        cond.Email = { $regex: req.body.Email, $options: 'i' };
+        cond.Email = { $regex: req.body.Email, $options: "i" };
       }
 
       let page = parseInt(req.query.page) || 1;
       let limit = parseInt(req.query.limit) || 10;
       let skip = (page - 1) * limit;
+
+      console.log(cond);
 
       const totalItems = await Contact.countDocuments(cond);
       const totalPages = Math.ceil(totalItems / limit);
@@ -53,8 +55,8 @@ module.exports = {
           totalItems,
           totalPages,
           currentPage: page,
-          itemsPerPage: limit
-        }
+          itemsPerPage: limit,
+        },
       });
     } catch (error) {
       return response.error(res, error);
@@ -67,34 +69,34 @@ module.exports = {
       if (!id || !status) {
         return res
           .status(400)
-          .json({ status: false, message: 'ID and status are required.' });
+          .json({ status: false, message: "ID and status are required." });
       }
-      const validStatuses = ['pending', 'resolved', 'closed'];
+      const validStatuses = ["pending", "resolved", "closed"];
       if (!validStatuses.includes(status)) {
         return res
           .status(400)
-          .json({ status: false, message: 'Invalid status value.' });
+          .json({ status: false, message: "Invalid status value." });
       }
       const updatedContact = await Contact.findByIdAndUpdate(
         id,
         { status },
-        { new: true }
+        { new: true },
       );
       if (!updatedContact) {
         return res
           .status(404)
-          .json({ status: false, message: 'Contact not found.' });
+          .json({ status: false, message: "Contact not found." });
       }
       return res.status(200).json({
         status: true,
-        message: 'Status updated successfully',
-        data: updatedContact
+        message: "Status updated successfully",
+        data: updatedContact,
       });
     } catch (error) {
-      console.error('Update Status Error:', error);
+      console.error("Update Status Error:", error);
       return res
         .status(500)
-        .json({ status: false, message: 'Server error', error: error.message });
+        .json({ status: false, message: "Server error", error: error.message });
     }
-  }
+  },
 };

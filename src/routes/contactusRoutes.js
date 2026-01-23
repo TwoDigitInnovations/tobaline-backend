@@ -5,7 +5,7 @@ const contactus = require("@controllers/contactUs");
 const isAuthenticated = require("../middlewares/authMiddleware");
 
 router.post("/create", contactus.contactUs);
-router.get("/getAllContactUs", isAuthenticated(["ADMIN"]), contactus.getAllContactUs);
-router.put("/updateStatus", isAuthenticated(["ADMIN"]), contactus.updateStatus);
+router.post("/getAllContactUs", contactus.getAllContactUs);
+router.post("/updateStatus", contactus.updateStatus);
 
 module.exports = router;

@@ -10,8 +10,9 @@ const {
   updateprofile,
   loginwithOtp,
   verifyOTPForLogin,
+  fileUpload
 } = require("@controllers/authController");
-
+const upload = require("@services/upload");
 const isAuthenticated = require("../middlewares/authMiddleware");
 
 router.post("/login", login);
@@ -27,5 +28,6 @@ router.post(
   isAuthenticated(["ADMIN", "USER"]),
   updateprofile,
 );
+router.post("/fileupload", upload.single("file"), fileUpload);
 
 module.exports = router;
