@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
@@ -8,9 +8,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    image: {
-      type: String,
-    },
+
     email: {
       type: String,
       required: true,
@@ -19,25 +17,24 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [
         /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/,
-        'Please enter a valid email address',
+        "Please enter a valid email address",
       ],
     },
     password: {
       type: String,
       required: true,
-      minlength: [6, 'Password must be at least 6 characters long'],
+      minlength: [6, "Password must be at least 6 characters long"],
     },
     phone: {
       type: Number,
     },
+    shippingAddress: {
+      type: Object,
+    },
     role: {
       type: String,
-      enum: ['USER', 'ADMIN'],
-      default: 'USER',
-    },
-    organization: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      enum: ["USER", "ADMIN"],
+      default: "USER",
     },
 
     createdAt: {
@@ -56,6 +53,6 @@ userSchema.methods.encryptPassword = (password) => {
   return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
