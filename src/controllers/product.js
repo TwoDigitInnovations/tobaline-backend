@@ -192,26 +192,16 @@ module.exports = {
     try {
       let cond = {};
 
-      if (req.query.Category && req.query.Category !== "All Category") {
+      if (req.query.Category && req.query.Category !== "All") {
         cond.categoryName = { $in: [req.query.Category] };
       }
-
-      if (req.query["Subcategory[]"]) {
-        const subcategories = Array.isArray(req.query["Subcategory[]"])
-          ? req.query["Subcategory[]"]
-          : [req.query["Subcategory[]"]];
-
-        cond.subCategoryName = { $in: subcategories };
-      }
-
-      console.log(cond);
 
       if (req.query.product) {
         cond._id = { $ne: req.query.product };
       }
 
-      if (req.query.brand) {
-        cond.brandName = req.query.brand;
+      if (req.query.clothTypeName) {
+        cond.clothTypeName = req.query.clothTypeName;
       }
 
       if (req.query.colors) {
@@ -237,12 +227,11 @@ module.exports = {
         };
       }
 
-      console.log(cond);
-
       let skip = (req.query.page - 1) * req.query.limit;
 
       const product = await Product.find(cond)
         .populate("category")
+        .populate("clothType")
         .skip(skip)
         .sort({ createdAt: -1 })
         .limit(parseInt(req.query.limit));
@@ -358,6 +347,30 @@ module.exports = {
       return response.error(res, error);
     }
   },
+  getAllSize: async (req, res) => {
+    try {
+      let product = await Product.aggregate([
+        { $unwind: "$varients" },
+        {
+          $group: {
+            _id: null, // We don't need to group by a specific field, so use null
+            uniqueColors: { $addToSet: "$varients.selected" }, // $addToSet ensures uniqueness
+          },
+        },
+        {
+          $project: {
+            _id: 0, // Exclude _id from the output
+            uniqueColors: 1,
+          },
+        },
+      ]);
+      const d = cleanAndUnique(product[0].Size);
+      return response.ok(res, { uniqueColors: d });
+    } catch (error) {
+      return response.error(res, error);
+    }
+  },
+
   getBrand: async (req, res) => {
     try {
       const product = await Product.aggregate([
@@ -467,20 +480,24 @@ module.exports = {
   requestProduct: async (req, res) => {
     try {
       const payload = req?.body || {};
-      const storePrefix = "JASZ";
+      const storePrefix = "TOBA";
 
+      const now = new Date();
+
+      const year = String(now.getFullYear()).slice(2);
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+
+      const datePart = `${year}${month}${day}`;
       const lastOrder = await ProductRequest.findOne()
         .sort({ createdAt: -1 })
         .lean();
 
       let orderNumber = 1;
 
-      const centralTime = DateTime.now().setZone("America/Chicago");
-      const datePart = centralTime.toFormat("yyLLdd"); // e.g., 240612
-
-      if (lastOrder && lastOrder.orderId) {
+      if (lastOrder?.orderId) {
         const match = lastOrder.orderId.match(/-(\d{2})$/);
-        if (match && match[1]) {
+        if (match) {
           orderNumber = parseInt(match[1], 10) + 1;
         }
       }
@@ -490,7 +507,8 @@ module.exports = {
 
       payload.orderId = generatedOrderId;
       const newOrder = new ProductRequest(payload);
-
+      const user = await User.findById(payload.user);
+      newOrder.ShippingAddress = user.shippingAddress;
       newOrder.orderId = generatedOrderId;
       await newOrder.save();
 
@@ -539,12 +557,6 @@ module.exports = {
       //   orderId: newOrder.orderId,
       // });
 
-      const user = await User.findById(payload.user); // user document milega
-      console.log("User shipping address before:", user.shippingAddress);
-      user.shippingAddress = payload.ShippingAddress; // update field
-      await user.save();
-      console.log("User shipping address updated:", user.shippingAddress);
-
       return response.ok(res, {
         message: "Product request added successfully",
         orders: newOrder,
@@ -566,6 +578,30 @@ module.exports = {
         .sort({ createdAt: -1 });
 
       return response.ok(res, product);
+    } catch (error) {
+      return response.error(res, error);
+    }
+  },
+  giverate: async (req, res) => {
+    console.log(req.body);
+    try {
+      let payload = req.body;
+      const re = await Review.findOne({
+        product: payload.product,
+        posted_by: req.user.id,
+      });
+      
+      if (re) {
+        re.description = payload.description;
+        re.rating = payload.rating;
+        await re.save();
+      } else {
+        payload.posted_by = req.user.id;
+        const u = new Review(payload);
+        await u.save();
+      }
+
+      return response.ok(res, { message: "successfully" });
     } catch (error) {
       return response.error(res, error);
     }

@@ -14,17 +14,23 @@ router.get("/getProductBycategoryId", product.getProductBycategoryId);
 router.get("/getProductbycategory/:id", product.getProductbycategory);
 router.get("/getProductBythemeId/:id", product.getProductBythemeId);
 router.post("/createProductRequest", product.requestProduct);
-router.get("/getrequestProduct", product.getrequestProduct);
-router.get("/getHistoryProduct", product.getHistoryProduct);
-router.get("/getProductByCatgeoryName", product.getProductByCatgeoryName);
+router.get(
+  "/getrequestProduct",
+  isAuthenticated(["ADMIN", "USER"]),
+  product.getrequestProduct,
+);
+router.get(
+  "/getHistoryProduct",
+  isAuthenticated(["USER"]),
+  product.getHistoryProduct,
+);
+router.get("/getProductByFilter", product.getProductByCatgeoryName);
 router.get("/getColors", product.getColors);
 router.get("/getBrand", product.getBrand);
 router.post("/getOrderBySeller", product.getOrderBySeller);
 router.get("/productsearch", product.productSearch);
-router.get(
-  "/getProductRequest/:id",
-  product.getrequestProductbyid,
-);
+router.get("/getProductRequest/:id", product.getrequestProductbyid);
+router.post("/giverate", isAuthenticated(["USER"]), product.giverate);
 router.get("/dashboarddetails", product.dashboarddetails);
 router.get("/getMonthlySales", product.getMonthlySales);
 router.get("/getTopSoldProduct", product.getTopSoldProduct);

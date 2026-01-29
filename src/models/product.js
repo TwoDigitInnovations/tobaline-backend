@@ -10,6 +10,13 @@ const productchema = new mongoose.Schema(
     categoryName: {
       type: String,
     },
+    clothType: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ClothType",
+    },
+    clothTypeName: {
+      type: String,
+    },
     origin: {
       type: String,
     },
@@ -42,7 +49,7 @@ const productchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    
+
     returnedQuantity: {
       type: Number,
       default: 0,
