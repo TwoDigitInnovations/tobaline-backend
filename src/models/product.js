@@ -20,6 +20,12 @@ const productchema = new mongoose.Schema(
     origin: {
       type: String,
     },
+    metadescription: {
+      type: String,
+    },
+    metatitle: {
+      type: String,
+    },
     slug: {
       type: String,
     },

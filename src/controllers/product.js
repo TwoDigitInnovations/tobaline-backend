@@ -424,7 +424,8 @@ module.exports = {
       let cond = {
         $or: [
           { name: { $regex: req.query.key, $options: "i" } },
-          { brandName: { $regex: req.query.key, $options: "i" } },
+          { categoryName: { $regex: req.query.key, $options: "i" } },
+          { clothTypeName: { $regex: req.query.key, $options: "i" } },
         ],
       };
       const product = await Product.find(cond).sort({ createdAt: -1 });
@@ -510,6 +511,10 @@ module.exports = {
       const user = await User.findById(payload.user);
       newOrder.ShippingAddress = user.shippingAddress;
       newOrder.orderId = generatedOrderId;
+
+      if (payload?.session_id) {
+        newOrder.PaymentStatus = "Paid";
+      }
       await newOrder.save();
 
       await Promise.all(
@@ -590,7 +595,7 @@ module.exports = {
         product: payload.product,
         posted_by: req.user.id,
       });
-      
+
       if (re) {
         re.description = payload.description;
         re.rating = payload.rating;
