@@ -188,16 +188,12 @@ module.exports = {
   },
 
   getProductBycategoryId: async (req, res) => {
-    console.log(req.query);
     try {
       let cond = {};
+      console.log("abcd", req.query.Category);
 
       if (req.query.Category && req.query.Category !== "All") {
-        cond.categoryName = { $in: [req.query.Category] };
-      }
-
-      if (req.query.product) {
-        cond._id = { $ne: req.query.product };
+        cond.categoryName = req.query.Category;
       }
 
       if (req.query.clothTypeName) {
@@ -216,25 +212,33 @@ module.exports = {
         };
       }
 
+      // Price
       if (req.query.minPrice && req.query.maxPrice) {
-        cond["varients.selected"] = {
+        cond.varients = {
           $elemMatch: {
-            offerprice: {
-              $gte: parseFloat(req.query.minPrice),
-              $lte: parseFloat(req.query.maxPrice),
+            selected: {
+              $elemMatch: {
+                offerprice: {
+                  $gte: parseFloat(req.query.minPrice),
+                  $lte: parseFloat(req.query.maxPrice),
+                },
+              },
             },
           },
         };
       }
+      console.log(cond);
 
-      let skip = (req.query.page - 1) * req.query.limit;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
 
       const product = await Product.find(cond)
         .populate("category")
         .populate("clothType")
-        .skip(skip)
         .sort({ createdAt: -1 })
-        .limit(parseInt(req.query.limit));
+        .skip(skip)
+        .limit(limit);
 
       const total = await Product.countDocuments(cond);
 
