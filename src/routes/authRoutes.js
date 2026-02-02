@@ -28,6 +28,7 @@ router.post(
   isAuthenticated(["ADMIN", "USER"]),
   updateprofile,
 );
+
 router.post("/fileupload", upload.single("file"), fileUpload);
 
 module.exports = router;
