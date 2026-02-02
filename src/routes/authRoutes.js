@@ -18,7 +18,7 @@ const isAuthenticated = require("../middlewares/authMiddleware");
 router.post("/login", login);
 router.post("/register", register);
 router.post("/loginwithOtp", loginwithOtp);
-router.post("/verifyOTPForLogin", verifyOTPForLogin);
+router.post("/verify-otp-login", verifyOTPForLogin);
 router.post("/sendOTP", sendOTP);
 router.post("/verifyOTP", verifyOTP);
 router.post("/changePassword", changePassword);
