@@ -1,15 +1,15 @@
 const authRoutes = require("@routes/authRoutes");
-const contactRoutes = require("@routes/contactusRoutes");
-const categoryRoutes = require("@routes/catgeoryRoutes");
+const contactusRoutes = require("@routes/contactusRoutes");
+const CatgeoryRoutes = require("@routes/CatgeoryRoutes");
 const productRoutes = require("@routes/productRoutes");
-const clothtypeRoutes = require("@routes/clothTypeRoutes");
-const stripeRoutes = require("@routes/stripeRoutes");
+const ClothTypeRoutes = require("@routes/ClothTypeRoutes");
+const StripeRoutes = require("@routes/StripeRoutes");
 
 module.exports = (app) => {
   app.use("/auth", authRoutes);
-  app.use("/contactus", contactRoutes);
-  app.use("/category", categoryRoutes);
+  app.use("/contactus", contactusRoutes);
+  app.use("/category", CatgeoryRoutes);
   app.use("/product", productRoutes);
-  app.use("/clothtype", clothtypeRoutes);
-  app.use("/stripe", stripeRoutes);
+  app.use("/clothtype", ClothTypeRoutes);
+  app.use("/stripe", StripeRoutes);
 };
