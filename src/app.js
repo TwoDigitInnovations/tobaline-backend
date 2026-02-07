@@ -17,7 +17,6 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(passport.initialize());
-// app.set("trust proxy", true);
 const routes = require('./routes');
 routes(app);
 
