@@ -10,7 +10,7 @@ module.exports = {
         mode: 'payment',
         line_items: cartItems.map((item) => ({
           price_data: {
-            currency: currency || 'usd',
+            currency: currency || 'USD',
             product_data: {
               name: item.name,
               images: [item.image]
